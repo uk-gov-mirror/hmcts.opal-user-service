@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import uk.gov.hmcts.opal.common.user.authorisation.model.UserState;
 import uk.gov.hmcts.reform.opal.dto.businessevent.RoleAssignedToUserEvent;
+import uk.gov.hmcts.reform.opal.dto.businessevent.RoleUnassignedFromUserEvent;
 import uk.gov.hmcts.reform.opal.dto.businessevent.UnitsAssociatedToRoleAmendedEvent;
 import uk.gov.hmcts.reform.opal.dto.search.UserSearchDto;
 import uk.gov.hmcts.reform.opal.entity.BusinessEventEntity;
@@ -221,6 +222,51 @@ class UserServiceTest {
             argThat((RoleAssignedToUserEvent event) ->
                 event.roleId().equals(201L)
                     && event.addedBusinessUnitIds().equals(Set.of((short) 11, (short) 14, (short) 15))),
+            eq(businessEventService)
+        );
+    }
+
+    @Test
+    void deleteRoleFromUser_removesAssignmentsAndLogsEvent() {
+        final UserEntity user = user(123L);
+        final List<BusinessUnitUserRoleEntity> existingAssignments = existingAssignments();
+
+        when(roleService.requireRole(201L)).thenReturn(role(201L));
+        when(roleService.getExistingAssignments(123L, 201L)).thenReturn(existingAssignments);
+        when(businessEventService.logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            any(RoleUnassignedFromUserEvent.class),
+            eq(businessEventService)
+        )).thenReturn(BusinessEventEntity.builder().businessEventId(3L).build());
+
+        userService.deleteRoleFromUser(user, 201L);
+
+        verify(roleService).removeAssignments(existingAssignments);
+        verify(businessEventService).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            argThat((RoleUnassignedFromUserEvent event) ->
+                event.roleId().equals(201L)
+                    && event.businessUnitIds().equals(Set.of((short) 11, (short) 12, (short) 13))),
+            eq(businessEventService)
+        );
+    }
+
+    @Test
+    void deleteRoleFromUser_returnsWhenNoAssignmentsExist() {
+        final UserEntity user = user(123L);
+
+        when(roleService.requireRole(201L)).thenReturn(role(201L));
+        when(roleService.getExistingAssignments(123L, 201L)).thenReturn(List.of());
+
+        userService.deleteRoleFromUser(user, 201L);
+
+        verify(roleService, Mockito.never()).removeAssignments(any());
+        verify(businessEventService, Mockito.never()).logBusinessEvent(
+            eq(BusinessEventLogType.ROLE_UNASSIGNED_FROM_USER),
+            eq(123L),
+            any(RoleUnassignedFromUserEvent.class),
             eq(businessEventService)
         );
     }
