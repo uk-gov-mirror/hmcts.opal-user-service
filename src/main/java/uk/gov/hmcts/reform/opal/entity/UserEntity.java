@@ -61,6 +61,21 @@ public class UserEntity implements Versioned {
     @Column(name = "created_date", nullable = false)
     private LocalDateTime createdDate;
 
+    @Column(name = "activation_date")
+    private LocalDateTime activationDate;
+
+    @Column(name = "suspension_start_date")
+    private LocalDateTime suspensionStartDate;
+
+    @Column(name = "suspension_end_date")
+    private LocalDateTime suspensionEndDate;
+
+    @Column(name = "suspension_reason", length = 250)
+    private String suspensionReason;
+
+    @Column(name = "deactivation_date")
+    private LocalDateTime deactivationDate;
+
     @Column(name = "token_subject", length = 100, unique = true)
     private String tokenSubject;
 
@@ -83,4 +98,34 @@ public class UserEntity implements Versioned {
         return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(BigInteger.ZERO);
     }
 
+    public String getStatusFromTime(LocalDateTime now) {
+
+        if (isDeactivated(now)) {
+            return "DEACTIVATED";
+        }
+
+        if (isSuspended(now)) {
+            return "SUSPENDED";
+        }
+
+        if (isPending(now)) {
+            return "PENDING";
+        }
+
+        return "ACTIVE";
+    }
+
+    private boolean isDeactivated(LocalDateTime nowUtc) {
+        return deactivationDate != null && !deactivationDate.isAfter(nowUtc);
+    }
+
+    private boolean isSuspended(LocalDateTime nowUtc) {
+        return suspensionStartDate != null
+            && !suspensionStartDate.isAfter(nowUtc)
+            && (suspensionEndDate == null || suspensionEndDate.isAfter(nowUtc));
+    }
+
+    private boolean isPending(LocalDateTime nowUtc) {
+        return activationDate == null || activationDate.isAfter(nowUtc);
+    }
 }

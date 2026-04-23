@@ -172,7 +172,7 @@ class UserPermissionsServiceV2Test {
         when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(proxy, true);
@@ -197,7 +197,7 @@ class UserPermissionsServiceV2Test {
         when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(proxy, false);
@@ -279,7 +279,7 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
         Long clientUserId = 123L;
         when(proxy.getUserId(authentication, proxy)).thenReturn(clientUserId);
 
@@ -298,7 +298,7 @@ class UserPermissionsServiceV2Test {
 
         // Arrange
         when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(USER_ID, proxy, false);
@@ -339,7 +339,7 @@ class UserPermissionsServiceV2Test {
         when(proxy.getUserV2(TOKEN_SUBJECT)).thenReturn(userEntity);
         when(jwt.getClaimAsString("preferred_username")).thenReturn(TOKEN_PREFERRED_USERNAME);
         when(jwt.getClaimAsString("name")).thenReturn(TOKEN_NAME);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         // Act
         UserStateV2Dto result = service.getUserStateV2(proxy, true);
@@ -364,7 +364,7 @@ class UserPermissionsServiceV2Test {
         SecurityContextHolder.setContext(securityContext);
 
         when(proxy.getUserV2(USER_ID)).thenReturn(userEntity);
-        when(userStateMapper.toUserStateV2Dto(userEntity)).thenReturn(dto);
+        when(userStateMapper.toUserStateV2Dto(userEntity, clock)).thenReturn(dto);
 
         Long clientUserId = 123L;
         when(proxy.getUserId(authentication, proxy)).thenReturn(clientUserId);

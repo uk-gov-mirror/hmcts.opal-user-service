@@ -12,6 +12,10 @@ import uk.gov.hmcts.reform.opal.entity.DomainEntity;
 import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Set;
 
@@ -21,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UserStateMapperTest {
 
     private final UserStateMapper mapper = new UserStateMapperImplementation();
+    private final Clock clock = Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC);
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,7 +58,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         String expected = """
@@ -145,7 +150,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(Set.of(businessUnitUserEntity));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -194,7 +199,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(Set.of(businessUnitUserEntity));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -228,7 +233,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(null);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -242,7 +247,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(emptySet());
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -260,7 +265,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(Set.of(buu));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -297,7 +302,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -336,7 +341,7 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(Set.of(buu));
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
@@ -363,11 +368,80 @@ class UserStateMapperTest {
         UserEntity user = buildUserEntity(businessUnitUserEntityList);
 
         //Act
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
 
         //Assert
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(expectedUserStateWithNoBusinessUnits()));
+    }
+
+    @Test
+    void toUserStateV2_statusPendingWhenActivationDateMissing() {
+        //Arrange
+        UserEntity user = buildUserEntity(emptySet());
+        user.setActivationDate(null);
+
+        //Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        //Assert
+        assertThat(dto.getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void toUserStateV2_statusPendingWhenActivationDateInFuture() {
+        //Arrange
+        UserEntity user = buildUserEntity(emptySet());
+        user.setActivationDate(nowUtc().plusDays(1));
+
+        //Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        //Assert
+        assertThat(dto.getStatus()).isEqualTo("PENDING");
+    }
+
+    @Test
+    void toUserStateV2_statusSuspendedWhenSuspensionWindowIsActive() {
+        //Arrange
+        UserEntity user = buildUserEntity(emptySet());
+        user.setSuspensionStartDate(nowUtc().minusDays(1));
+        user.setSuspensionEndDate(nowUtc().plusDays(1));
+
+        //Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        //Assert
+        assertThat(dto.getStatus()).isEqualTo("SUSPENDED");
+    }
+
+    @Test
+    void toUserStateV2_statusDeactivatedWhenDeactivationDateReached() {
+        //Arrange
+        UserEntity user = buildUserEntity(emptySet());
+        user.setDeactivationDate(nowUtc().minusDays(1));
+
+        //Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        //Assert
+        assertThat(dto.getStatus()).isEqualTo("DEACTIVATED");
+    }
+
+    @Test
+    void toUserStateV2_statusPrecedence_deactivatedOverSuspendedAndPending() {
+        //Arrange
+        UserEntity user = buildUserEntity(emptySet());
+        user.setActivationDate(nowUtc().plusDays(1));
+        user.setSuspensionStartDate(nowUtc().minusDays(1));
+        user.setSuspensionEndDate(nowUtc().plusDays(1));
+        user.setDeactivationDate(nowUtc().minusDays(1));
+
+        //Act
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
+
+        //Assert
+        assertThat(dto.getStatus()).isEqualTo("DEACTIVATED");
     }
 
     private RoleEntity buildRole(String name, List<String> permNames, boolean active) {
@@ -401,9 +475,14 @@ class UserStateMapperTest {
             .tokenName("token")
             .tokenSubject("subject")
             .username("username")
+            .activationDate(nowUtc().minusDays(1))
             .businessUnitUsers(businessUnitUserEntityList)
             .versionNumber(321L)
             .build();
+    }
+
+    private LocalDateTime nowUtc() {
+        return LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
     }
 
     private String expectedUserStateWithNoBusinessUnits() {

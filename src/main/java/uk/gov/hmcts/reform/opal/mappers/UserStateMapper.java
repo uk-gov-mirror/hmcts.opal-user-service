@@ -1,9 +1,9 @@
 package uk.gov.hmcts.reform.opal.mappers;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.BusinessUnitUserDto;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.Domain;
 import uk.gov.hmcts.opal.common.user.authorisation.client.dto.DomainDto;
@@ -17,6 +17,7 @@ import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntitlementEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 
+import java.time.Clock;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -45,11 +46,16 @@ public interface UserStateMapper {
     @Mapping(source = "userEntity.userId", target = "userId")
     @Mapping(source = "userEntity.username", target = "username")
     @Mapping(source = "userEntity.tokenName", target = "name")
-    @Mapping(target = "status", constant = "ACTIVE")
+    @Mapping(
+        target = "status",
+        expression = "java(userEntity.getStatusFromTime("
+            + "java.time.LocalDateTime.ofInstant(clock.instant(), java.time.ZoneOffset.UTC)"
+            + "))"
+    )
     @Mapping(source = "userEntity.version", target = "version")
     @Mapping(target = "cacheName", ignore = true)
     @Mapping(target = "domains", expression = "java(mapBusinessUnitUsersToDomains(userEntity.getBusinessUnitUsers()))")
-    UserStateV2Dto toUserStateV2Dto(UserEntity userEntity);
+    UserStateV2Dto toUserStateV2Dto(UserEntity userEntity, Clock clock);
 
     /**
      * Helper method called by the service to map a BusinessUnitUserEntity and its associated
