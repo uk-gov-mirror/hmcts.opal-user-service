@@ -134,10 +134,6 @@ public class UserEntity implements Versioned {
         ACTIVE,
         PENDING,
         SUSPENDED,
-        DEACTIVATED;
-
-        public String toLowerCaseValue() {
-            return name().toLowerCase(Locale.ROOT);
-        }
+        DEACTIVATED
     }
 }

@@ -186,7 +186,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                 ))
                 .toList();
 
-            return userStateMapper.toUserStateDto(user, businessUnitUsers);
+            return userStateMapper.toUserStateDto(user, businessUnitUsers, clock);
         }
 
         // 3. Group entitlements by the BusinessUnitUser's ID (a String)
@@ -208,7 +208,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             .toList();
 
         // 6. Pass the user entity and the BUU list to the mapper.
-        return userStateMapper.toUserStateDto(user, buuDtos);
+        return userStateMapper.toUserStateDto(user, buuDtos, clock);
     }
 
     private void compare(String fromToken, String fromDb, Long userId, String reason, Versioned versioned) {
@@ -258,7 +258,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
                               .build());
 
         log.debug(":createUser: name: {}, new id: {}", userEntity.getTokenName(), userEntity.getUserId());
-        return userMapper.toUserDto(userEntity);
+        return userMapper.toUserDto(userEntity, clock);
     }
 
     @Transactional
@@ -281,7 +281,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
             UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
 
             log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
-            return userMapper.toUserDto(updatedUser);
+            return userMapper.toUserDto(updatedUser, clock);
         }
     }
 
@@ -301,7 +301,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         UserEntity updatedUser = userRepository.saveAndFlush(existingUser);
 
         log.debug(":updatedUser: name: {}, user id: {}", updatedUser.getTokenName(), updatedUser.getUserId());
-        return userMapper.toUserDto(updatedUser);
+        return userMapper.toUserDto(updatedUser, clock);
     }
 
     public Jwt getJwtToken(Authentication authentication) {

@@ -2,6 +2,8 @@ package uk.gov.hmcts.reform.opal.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.cucumber.java.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ import uk.gov.hmcts.reform.opal.entity.RoleEntity;
 import uk.gov.hmcts.reform.opal.entity.UserEntity;
 import uk.gov.hmcts.reform.opal.mappers.UserStateMapper;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,11 +41,18 @@ class UserRepositoryDatabaseIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private UserStateMapper mapper;
 
+    Clock clock;
+
+    @BeforeEach
+    void setUp() {
+        clock = Clock.fixed(Instant.parse("2026-04-14T10:15:30Z"), ZoneId.of("UTC"));
+    }
+
     @Test
     @DisplayName("Test UserStateV2Dto production in isolation")
     void testUserStateV2DtoProductionInIsolation() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000000L).orElseThrow();
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree(EXPECTED_V2_USER_STATE));
@@ -50,7 +62,7 @@ class UserRepositoryDatabaseIntegrationTest extends BaseIntegrationTest {
     @DisplayName("Test UserStateV2Dto production in isolation when user has no business units")
     void testUserStateV2DtoProductionInIsolationWhenUserHasNoBusinessUnitUsers() throws JsonProcessingException {
         UserEntity user = userRepository.findIdWithPermissions(500000001L).orElseThrow();
-        UserStateV2Dto dto = mapper.toUserStateV2Dto(user);
+        UserStateV2Dto dto = mapper.toUserStateV2Dto(user, clock);
         ObjectMapper objectMapper = new ObjectMapper();
         assertThat(objectMapper.readTree(objectMapper.writeValueAsString(dto)))
             .isEqualTo(objectMapper.readTree("""
