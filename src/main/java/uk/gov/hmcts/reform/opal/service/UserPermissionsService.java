@@ -123,7 +123,7 @@ public class UserPermissionsService implements UserPermissionsProxy {
         compare(name, user.getTokenName(), user.getUserId(), "Name mismatch:", user);
 
         log.debug(":getUserState: found User: {}", username);
-         UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
+        UserStateV2Dto dto = userStateMapper.toUserStateV2Dto(user, clock);
         if (Optional.ofNullable(newLogin).orElse(false)) {
             logUserAuthenticationEvent(user.getUserId());
             updateLastLogin(user);

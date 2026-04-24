@@ -45,7 +45,9 @@ public interface UserStateMapper {
     @Mapping(source = "userEntity.tokenName", target = "name")
     @Mapping(source = "userEntity", target = "status", qualifiedByName = "mapLowerCaseStatus")
     @Mapping(source = "userEntity.version", target = "version")
-    UserStateDto toUserStateDto(UserEntity userEntity, List<BusinessUnitUserDto> businessUnitUsers, @Context Clock clock);
+    UserStateDto toUserStateDto(UserEntity userEntity,
+                                List<BusinessUnitUserDto> businessUnitUsers,
+                                @Context Clock clock);
 
     @Mapping(source = "userEntity.userId", target = "userId")
     @Mapping(source = "userEntity.username", target = "username")
