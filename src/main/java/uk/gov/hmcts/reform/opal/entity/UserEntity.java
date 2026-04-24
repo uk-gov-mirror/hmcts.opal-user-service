@@ -122,7 +122,7 @@ public class UserEntity implements Versioned {
     private boolean isSuspended(LocalDateTime nowUtc) {
         return suspensionStartDate != null
             && !suspensionStartDate.isAfter(nowUtc)
-            && (suspensionEndDate == null || suspensionEndDate.isAfter(nowUtc));
+            && (suspensionEndDate == null || !suspensionEndDate.isBefore(nowUtc));
     }
 
     private boolean isPending(LocalDateTime nowUtc) {

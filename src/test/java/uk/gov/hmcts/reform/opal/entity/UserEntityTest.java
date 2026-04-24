@@ -24,35 +24,58 @@ class UserEntityTest {
     private static Stream<Arguments> statusScenarios() {
         return Stream.of(
             arguments(
-                "pending when activation date is missing",
+                "PO-2834 AC1: pending when activation date is missing",
                 UserEntity.builder().build(),
                 UserEntity.Status.PENDING
             ),
             arguments(
-                "pending when activation date is in the future",
+                "PO-2834 AC2: pending when activation date is in the future",
                 UserEntity.builder()
                     .activationDate(NOW.plusDays(1))
                     .build(),
                 UserEntity.Status.PENDING
             ),
             arguments(
-                "active when activation date is in the past and no other flags",
+                "PO-2834 AC3: active when activation date is today and no suspension or deactivation exists",
+                UserEntity.builder()
+                    .activationDate(NOW)
+                    .build(),
+                UserEntity.Status.ACTIVE
+            ),
+            arguments(
+                "PO-2834 AC4: active when activation date is in the past and no suspension or deactivation exists",
                 UserEntity.builder()
                     .activationDate(NOW.minusDays(1))
                     .build(),
                 UserEntity.Status.ACTIVE
             ),
             arguments(
-                "suspended when within suspension window",
+                "PO-2834 AC5: active when suspension start date is in the future",
                 UserEntity.builder()
                     .activationDate(NOW.minusDays(1))
-                    .suspensionStartDate(NOW.minusHours(1))
-                    .suspensionEndDate(NOW.plusHours(1))
+                    .suspensionStartDate(NOW.plusHours(1))
                     .build(),
-                UserEntity.Status.SUSPENDED
+                UserEntity.Status.ACTIVE
             ),
             arguments(
-                "deactivated when deactivation date is reached",
+                "PO-2834 AC6: active when suspension period has fully ended",
+                UserEntity.builder()
+                    .activationDate(NOW.minusDays(1))
+                    .suspensionStartDate(NOW.minusHours(2))
+                    .suspensionEndDate(NOW.minusHours(1))
+                    .build(),
+                UserEntity.Status.ACTIVE
+            ),
+            arguments(
+                "PO-2834 AC7: active when deactivation date is in the future",
+                UserEntity.builder()
+                    .activationDate(NOW.minusDays(1))
+                    .deactivationDate(NOW.plusDays(1))
+                    .build(),
+                UserEntity.Status.ACTIVE
+            ),
+            arguments(
+                "PO-2834 AC8: deactivated when deactivation date is today",
                 UserEntity.builder()
                     .activationDate(NOW.minusDays(1))
                     .deactivationDate(NOW)
@@ -60,23 +83,29 @@ class UserEntityTest {
                 UserEntity.Status.DEACTIVATED
             ),
             arguments(
-                "deactivated takes precedence over suspended and pending",
+                "PO-2834 AC9: deactivated when deactivation date is in the past",
                 UserEntity.builder()
-                    .activationDate(NOW.plusDays(1))
-                    .suspensionStartDate(NOW.minusHours(1))
-                    .suspensionEndDate(NOW.plusHours(1))
+                    .activationDate(NOW.minusDays(1))
                     .deactivationDate(NOW.minusMinutes(1))
                     .build(),
                 UserEntity.Status.DEACTIVATED
             ),
             arguments(
-                "not suspended when suspension end is exactly now",
+                "PO-2834 AC10: suspended when suspension has started and has no end date",
+                UserEntity.builder()
+                    .activationDate(NOW.minusDays(1))
+                    .suspensionStartDate(NOW.minusHours(1))
+                    .build(),
+                UserEntity.Status.SUSPENDED
+            ),
+            arguments(
+                "PO-2834 AC11: suspended when suspension has started and ends in the future or now",
                 UserEntity.builder()
                     .activationDate(NOW.minusDays(1))
                     .suspensionStartDate(NOW.minusHours(1))
                     .suspensionEndDate(NOW)
                     .build(),
-                UserEntity.Status.ACTIVE
+                UserEntity.Status.SUSPENDED
             )
         );
     }
