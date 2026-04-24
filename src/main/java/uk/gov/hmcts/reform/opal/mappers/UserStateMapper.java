@@ -50,7 +50,7 @@ public interface UserStateMapper {
         target = "status",
         expression = "java(userEntity.getStatusFromTime("
             + "java.time.LocalDateTime.ofInstant(clock.instant(), java.time.ZoneOffset.UTC)"
-            + "))"
+            + ").name())"
     )
     @Mapping(source = "userEntity.version", target = "version")
     @Mapping(target = "cacheName", ignore = true)

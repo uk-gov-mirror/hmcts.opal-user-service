@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -98,21 +99,21 @@ public class UserEntity implements Versioned {
         return Optional.ofNullable(versionNumber).map(BigInteger::valueOf).orElse(BigInteger.ZERO);
     }
 
-    public String getStatusFromTime(LocalDateTime now) {
+    public Status getStatusFromTime(LocalDateTime now) {
 
         if (isDeactivated(now)) {
-            return "DEACTIVATED";
+            return Status.DEACTIVATED;
         }
 
         if (isSuspended(now)) {
-            return "SUSPENDED";
+            return Status.SUSPENDED;
         }
 
         if (isPending(now)) {
-            return "PENDING";
+            return Status.PENDING;
         }
 
-        return "ACTIVE";
+        return Status.ACTIVE;
     }
 
     private boolean isDeactivated(LocalDateTime nowUtc) {
@@ -127,5 +128,16 @@ public class UserEntity implements Versioned {
 
     private boolean isPending(LocalDateTime nowUtc) {
         return activationDate == null || activationDate.isAfter(nowUtc);
+    }
+
+    public enum Status {
+        ACTIVE,
+        PENDING,
+        SUSPENDED,
+        DEACTIVATED;
+
+        public String toLowerCaseValue() {
+            return name().toLowerCase(Locale.ROOT);
+        }
     }
 }
