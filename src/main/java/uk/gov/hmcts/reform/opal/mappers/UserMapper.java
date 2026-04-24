@@ -11,10 +11,7 @@ public interface UserMapper {
 
     @Mapping(source = "tokenSubject", target = "subject")
     @Mapping(source = "tokenName", target = "name")
-    @Mapping(
-        target = "status",
-        expression = "java(uk.gov.hmcts.reform.opal.entity.UserEntity.Status.ACTIVE.toLowerCaseValue())"
-    )
+    @Mapping(target = "status", constant = "active")
     UserDto toUserDto(UserEntity userEntity);
 
 }
