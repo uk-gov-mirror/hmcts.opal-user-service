@@ -2,6 +2,7 @@ package uk.gov.hmcts.reform.opal.entity;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -130,6 +131,6 @@ public class UserEntity implements Versioned {
     // but for now we can use it as email address
     //We are actively reviewing this under PO-10558
     public String getEmail() {
-        return username;
+        return username.toLowerCase(Locale.ROOT);
     }
 }
